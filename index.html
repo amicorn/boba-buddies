@@ -56,7 +56,6 @@
         let motionGranted = false;
         
         let characterPool = [];
-        // Define scaleFactor here so we can use it in setup and draw
         let globalScale = 0.08; 
 
         function preload() {
@@ -64,6 +63,7 @@
             characterPool.push(loadImage('assets/star_lighter.png'));
             characterPool.push(loadImage('assets/frog.png'));
             characterPool.push(loadImage('assets/bird.png'));
+            characterPool.push(loadImage('assets/bear.png'));
         }
 
         function requestAccess() {
@@ -87,6 +87,7 @@
             engine = Matter.Engine.create();
             world = engine.world;
 
+            // Boundaries
             let t = 100;
             let ground = Matter.Bodies.rectangle(width / 2, height + t / 2, width, t, { isStatic: true });
             let lWall = Matter.Bodies.rectangle(-t / 2, height / 2, t, height * 2, { isStatic: true });
@@ -94,26 +95,38 @@
             let roof = Matter.Bodies.rectangle(width / 2, -t / 2, width, t, { isStatic: true });
             Matter.World.add(world, [ground, lWall, rWall, roof]);
 
+            // --- 1. GUARANTEED SPAWN: 2 of each character ---
+            for (let img of characterPool) {
+                for (let count = 0; count < 2; count++) {
+                    createItem('character', img);
+                }
+            }
+
+            // --- 2. RANDOM FILL: Add more until we have a nice full screen ---
+            // Total of 40 items (including the 10 characters we just made)
             for (let i = 0; i < 30; i++) {
                 let type = random(['boba', 'boba', 'strawberry', 'character']);
-                
-                // PHYSICS RADIUS ADJUSTMENT
-                // r is the "hitbox". Since images are smaller, r must be smaller too.
-                let r;
-                if (type === 'boba') r = 12;
-                else if (type === 'strawberry') r = 20;
-                else r = 35; // Character hitbox
-                
-                let b = Matter.Bodies.circle(random(width), random(height / 2), r, { restitution: 0.5 });
-                b.label = type;
-
-                if (type === 'character') {
-                    b.characterImage = random(characterPool);
-                }
-
-                items.push(b);
-                Matter.World.add(world, b);
+                createItem(type);
             }
+        }
+
+        // HELPER FUNCTION: To handle adding bodies to the world cleanly
+        function createItem(type, specificImg = null) {
+            let r;
+            if (type === 'boba') r = 12;
+            else if (type === 'strawberry') r = 20;
+            else r = 35; // Character
+
+            let b = Matter.Bodies.circle(random(width), random(-200, height / 2), r, { restitution: 0.5 });
+            b.label = type;
+
+            if (type === 'character') {
+                // Use the specific image if provided, otherwise pick a random one
+                b.characterImage = specificImg ? specificImg : random(characterPool);
+            }
+
+            items.push(b);
+            Matter.World.add(world, b);
         }
 
         function draw() {
@@ -150,7 +163,6 @@
                 } else {
                     if (b.characterImage) {
                         imageMode(CENTER);
-                        // Using the globalScale (0.08) for a much smaller appearance
                         let displayWidth = b.characterImage.width * globalScale;
                         let displayHeight = b.characterImage.height * globalScale;
                         image(b.characterImage, 0, 0, displayWidth, displayHeight); 
@@ -162,7 +174,7 @@
 
         function drawBoba() {
             fill(40); noStroke();
-            ellipse(0, 0, 24); // Smaller boba to match character scale
+            ellipse(0, 0, 24);
             fill(255, 80); 
             ellipse(-4, -4, 6);
         }
