@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Strawberry Boba Surprise!</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #ffe4e1; font-family: sans-serif; }
+        #controls { position: absolute; top: 10px; width: 100%; text-align: center; color: #ff69b4; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id="controls">Tilt your phone to stir the boba! 🍓</div>
+    
+<script>
+let engine, world;
+let items = [];
+let cupBottom, leftWall, rightWall;
+let strawberryImg, characterImg, bobaImg;
+
+function setup() {
+    createCanvas(windowWidth, windowHeight);
+    
+    // 1. Setup Physics
+    engine = Matter.Engine.create();
+    world = engine.world;
+
+    // 2. Create the "Cup" (Invisible boundaries)
+    let wallThickness = 50;
+    let cupWidth = width * 0.8;
+    
+    cupBottom = Matter.Bodies.rectangle(width/2, height - 20, cupWidth, wallThickness, { isStatic: true });
+    leftWall = Matter.Bodies.rectangle((width - cupWidth)/2, height/2, wallThickness, height, { isStatic: true });
+    rightWall = Matter.Bodies.rectangle(width - (width - cupWidth)/2, height/2, wallThickness, height, { isStatic: true });
+    
+    Matter.World.add(world, [cupBottom, leftWall, rightWall]);
+
+    // 3. Add Boba Pearls & Characters
+    for (let i = 0; i < 20; i++) {
+        spawnItem('boba');
+    }
+    for (let i = 0; i < 5; i++) {
+        spawnItem('strawberry');
+    }
+    spawnItem('character'); // The main cute character
+}
+
+function spawnItem(type) {
+    let x = random(width * 0.2, width * 0.8);
+    let y = random(-200, 0);
+    let sz = type === 'boba' ? 15 : 30;
+    
+    let body = Matter.Bodies.circle(x, y, sz, {
+        restitution: 0.5, // Bounciness
+        friction: 0.1
+    });
+    body.label = type;
+    items.push(body);
+    Matter.World.add(world, body);
+}
+
+function draw() {
+    background('#fff0f5'); // Light pink tea color
+    Matter.Engine.update(engine);
+
+    // --- HANDLE TILT (Mobile) ---
+    // If on desktop, it uses mouse position to simulate tilt
+    let gravityX = map(rotationY || (mouseX - width/2)/10, -30, 30, -1, 1);
+    let gravityY = map(rotationX || (mouseY - height/2)/10, -30, 30, -1, 1);
+    engine.world.gravity.x = constrain(gravityX, -1, 1);
+    engine.world.gravity.y = constrain(gravityY, -1, 1);
+
+    // Draw the "Tea" liquid background
+    fill(255, 182, 193, 150);
+    noStroke();
+    rect(width*0.1, height*0.1, width*0.8, height);
+
+    // Draw the items
+    for (let body of items) {
+        let pos = body.position;
+        let angle = body.angle;
+        push();
+        translate(pos.x, pos.y);
+        rotate(angle);
+        
+        if (body.label === 'boba') {
+            fill(40);
+            ellipse(0, 0, 30);
+            fill(80); // highlight
+            ellipse(-5, -5, 8);
+        } else if (body.label === 'strawberry') {
+            drawStrawberry();
+        } else {
+            drawCuteFace();
+        }
+        pop();
+    }
+    
+    // Draw the Straw
+    fill('#ffb6c1');
+    rect(width/2 + 20, 0, 40, height);
+}
+
+function drawStrawberry() {
+    fill('#ff4d4d');
+    beginShape();
+    vertex(0, -20);
+    bezierVertex(20, -20, 20, 20, 0, 25);
+    bezierVertex(-20, 20, -20, -20, 0, -20);
+    endShape(CLOSE);
+    fill('#32cd32'); // Leaf
+    ellipse(0, -20, 15, 8);
+}
+
+function drawCuteFace() {
+    // Line Friends style bear/bunny face
+    fill(255);
+    ellipse(0, 0, 60); // Head
+    fill(0);
+    ellipse(-10, -5, 5); // Eye
+    ellipse(10, -5, 5); // Eye
+    noFill();
+    stroke(0);
+    arc(0, 5, 10, 10, 0, PI); // Smile
+}
+
+// Request permission for iOS motion sensors
+function mousePressed() {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission();
+    }
+}
+</script>
+</body>
+</html>
