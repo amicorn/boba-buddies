@@ -36,18 +36,16 @@
 <body>
     <button id="mobile-trigger" onclick="requestAccess()"></button>
     
-    <div id="ui-text">Tilt your phone to slosh the boba!</div>
+    <div id="ui-text">Tap the buddies to pop them!</div>
 
     <script>
         let engine, world;
         let items = [];
         let motionGranted = false;
         let characterPool = [];
-        // --- SCALE REDUCED BY 20% (0.08 -> 0.064) ---
         let globalScale = 0.064; 
         let backgroundImg, buttonImg;
-        let collideSound; 
-        let lastSoundTime = 0;
+        let popSound; 
 
         function preload() {
             backgroundImg = loadImage('assets/boba_background.png');
@@ -64,7 +62,7 @@
             characterPool.push(loadImage('assets/ice.png'));
 
             try {
-                collideSound = loadSound('assets/pop.mp3');
+                popSound = loadSound('assets/pop.mp3');
             } catch (e) { console.log("Audio load error"); }
         }
 
@@ -74,9 +72,7 @@
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
                     .then(response => {
-                        if (response == 'granted') {
-                            startExperience();
-                        }
+                        if (response == 'granted') startExperience();
                     })
                     .catch(console.error);
             } else {
@@ -102,15 +98,6 @@
             let roof = Matter.Bodies.rectangle(width / 2, -t / 2, width, t, { isStatic: true });
             Matter.World.add(world, [ground, lWall, rWall, roof]);
 
-            Matter.Events.on(engine, 'collisionStart', function(event) {
-                let currentTime = millis();
-                if (motionGranted && collideSound && collideSound.isLoaded() && currentTime - lastSoundTime > 120) {
-                    collideSound.rate(random(0.9, 1.1));
-                    collideSound.play();
-                    lastSoundTime = currentTime;
-                }
-            });
-
             for (let img of characterPool) {
                 for (let count = 0; count < 2; count++) createItem(img);
             }
@@ -118,12 +105,38 @@
         }
 
         function createItem(img) {
-            // --- RADIUS REDUCED BY 20% (35 -> 28) ---
             let r = 28; 
             let b = Matter.Bodies.circle(random(width), random(-200, height / 2), r, { restitution: 0.5 });
             b.characterImage = img;
+            b.isPopping = false;
+            b.popScale = 1.0;
+            b.popAlpha = 255;
             items.push(b);
             Matter.World.add(world, b);
+        }
+
+        // --- NEW POPPING LOGIC ---
+        function mousePressed() {
+            if (!motionGranted) return;
+
+            // Check from the end of the array to front (top-most items first)
+            for (let i = items.length - 1; i >= 0; i--) {
+                let b = items[i];
+                if (b.isPopping) continue;
+
+                let d = dist(mouseX, mouseY, b.position.x, b.position.y);
+                if (d < 35) { // Radius + a little extra padding for easier tapping
+                    b.isPopping = true;
+                    // Disable physics for this item so it stays in place while popping
+                    Matter.Body.setStatic(b, true);
+                    
+                    if (popSound && popSound.isLoaded()) {
+                        popSound.rate(random(0.9, 1.2));
+                        popSound.play();
+                    }
+                    break; // Only pop one per tap
+                }
+            }
         }
 
         function draw() {
@@ -152,13 +165,29 @@
                 engine.world.gravity.x = constrain(gravX, -2, 2);
                 engine.world.gravity.y = constrain(gravY, -2, 2);
 
-                for (let b of items) {
+                for (let i = items.length - 1; i >= 0; i--) {
+                    let b = items[i];
                     push();
                     translate(b.position.x, b.position.y);
                     rotate(b.angle);
+                    
+                    if (b.isPopping) {
+                        // Animation: Grow and Fade
+                        b.popScale += 0.08;
+                        b.popAlpha -= 20;
+                        tint(255, b.popAlpha);
+                        
+                        // If fully faded, remove from game
+                        if (b.popAlpha <= 0) {
+                            Matter.World.remove(world, b);
+                            items.splice(i, 1);
+                        }
+                    }
+
                     if (b.characterImage) {
                         imageMode(CENTER);
-                        image(b.characterImage, 0, 0, b.characterImage.width * globalScale, b.characterImage.height * globalScale); 
+                        let s = globalScale * b.popScale;
+                        image(b.characterImage, 0, 0, b.characterImage.width * s, b.characterImage.height * s); 
                     }
                     pop();
                 }
