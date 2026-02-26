@@ -26,7 +26,7 @@
 
 <body>
     <button id="mobile-trigger" onclick="requestAccess()"></button>
-    <div id="ui-text">Tilt to slosh, tap to pop!</div>
+    <div id="ui-text">Tilt your phone to slosh the tea, tap the buddies to pop them!</div>
 
     <script>
         let engine, world;
@@ -42,7 +42,6 @@
         let gameStarted = false;
 
         function preload() {
-            // Adjust paths if necessary
             backgroundImg = loadImage('assets/boba_background.png');
             buttonImg = loadImage('assets/boba_button.png');
             characterPool.push(
@@ -64,7 +63,7 @@
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission().then(response => {
                     if (response == 'granted') startExperience();
-                    else startExperience(); // Start anyway for desktop/unsupported
+                    else startExperience(); 
                 }).catch(() => startExperience());
             } else { startExperience(); }
         }
@@ -88,7 +87,6 @@
             let roof = Matter.Bodies.rectangle(width / 2, -t / 2, width, t, { isStatic: true });
             Matter.World.add(world, [ground, lWall, rWall, roof]);
 
-            // Initial population
             for (let img of characterPool) {
                 createItem(img);
             }
@@ -130,7 +128,7 @@
                 if (b.isPopping) continue;
                 
                 let d = dist(mouseX, mouseY, b.position.x, b.position.y);
-                if (d < 50) { // Slightly larger hit area for easier popping
+                if (d < 50) { 
                     b.isPopping = true;
                     Matter.Body.setStatic(b, true);
                     if (popSound && popSound.isLoaded()) {
@@ -143,7 +141,7 @@
         }
 
         function draw() {
-            background(255, 240, 245); // Fallback color
+            background(255, 240, 245);
 
             if (backgroundImg) {
                 let bgAspect = backgroundImg.width / backgroundImg.height;
@@ -157,7 +155,6 @@
             if (gameStarted) {
                 Matter.Engine.update(engine);
                 
-                // Motion logic
                 let gravX = (rotationY !== null) ? map(rotationY, -30, 30, -1.5, 1.5) : 0;
                 let gravY = (rotationX !== null) ? map(rotationX, -30, 30, -1.5, 1.5) : 1;
                 
@@ -168,10 +165,8 @@
                 engine.world.gravity.x = constrain(gravX, -2, 2);
                 engine.world.gravity.y = constrain(gravY, -2, 2);
 
-                // Draw and Update Items
                 for (let i = items.length - 1; i >= 0; i--) {
                     let b = items[i];
-
                     push();
                     translate(b.position.x, b.position.y);
                     rotate(b.angle);
@@ -189,20 +184,18 @@
                     }
                     pop();
 
-                    // Remove item once it fully fades out
                     if (b.isPopping && b.popAlpha <= 0) {
                         Matter.World.remove(world, b);
                         items.splice(i, 1);
                     }
                 }
 
-                // TRIGGER CONDITION: If game started and all items have been popped and removed
                 if (items.length === 0 && !showCard) {
                     showCard = true;
                 }
 
             } else {
-                // Initial Start Screen
+                // RESTORED: Original Start Screen Text Styling
                 imageMode(CENTER);
                 if (buttonImg) {
                     let btnW = 320; let btnH = (buttonImg.height / buttonImg.width) * btnW;
@@ -210,6 +203,13 @@
                 }
                 textFont('VT323'); textSize(32); textAlign(CENTER, CENTER);
                 fill('#D02090');
+                // The thick shadow loop from the previous version
+                for(let x=-2; x<=2; x++) { 
+                    for(let y=-2; y<=2; y++) {
+                        text("START", width/2+x, height/2+y); 
+                    }
+                }
+                fill(255); 
                 text("START", width/2, height/2);
             }
 
@@ -222,7 +222,7 @@
         function drawBirthdayCard() {
             push();
             translate(width/2, height/2);
-            cardScale = lerp(cardScale, 1.0, 0.08); // Smooth pop-in
+            cardScale = lerp(cardScale, 1.0, 0.08);
             scale(cardScale);
             
             let cardW = min(width * 0.9, 420);
@@ -234,7 +234,6 @@
             fill(255, 250, 252, 245); 
             rect(0, 0, cardW, cardH, 20);
             
-            // Decorative Inner Border
             noFill();
             strokeWeight(2);
             rect(0, 0, cardW - 20, cardH - 20, 15);
@@ -244,13 +243,12 @@
             textFont('VT323');
             textAlign(CENTER, CENTER);
             
-            let msg = "happy birthday to my beautiful baddie boba bestie!! i love you so so much and hope you enjoy this game i designed and coded for you <3\n\nthis app was inspired by you! i know you like the line friends characters and we've had so many cute cafe and boba sessions where we've spilled all tea ;)\n\nhope you have the most wonderful birthday!\n\nxoxo, Amy";
+            let msg = "happy birthday to my beautiful baddie boba bestie!! i love you so so much and hope you enjoy this game i designed and coded for you <3\n\nthis app was inspired by you! i know you like the line friends characters and we've had so many cute cafe and boba sessions where we've spilled all the tea ;)\n\nhope you have the most wonderful birthday!\n\nxoxo, Amy";
             
             let dynamicSize = map(cardW, 300, 420, 18, 24);
             textSize(dynamicSize);
             textLeading(dynamicSize * 1.3);
             
-            // The text box
             text(msg, 0, 0, cardW - 40, cardH - 40);
             pop();
         }
