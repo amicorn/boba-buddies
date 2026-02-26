@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,111 +8,170 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; background: #FFF0F5; touch-action: none; }
-        #permission-btn {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            padding: 20px 40px; font-size: 20px; background: #ff69b4; color: white;
-            border: none; border-radius: 50px; cursor: pointer; z-index: 100;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-family: sans-serif;
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #FFF0F5;
+            touch-action: none;
         }
-        #ui-text { 
-            position: absolute; bottom: 20px; width: 100%; text-align: center; 
-            color: #ff69b4; font-family: sans-serif; pointer-events: none; z-index: 10;
+
+        #permission-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            font-size: 20px;
+            background: #ff69b4;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-family: sans-serif;
+        }
+
+        #ui-text {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: #ff69b4;
+            font-family: sans-serif;
+            pointer-events: none;
+            z-index: 10;
         }
     </style>
 </head>
+
 <body>
     <button id="permission-btn" onclick="requestAccess()">Click to Start Boba Magic! ✨</button>
     <div id="ui-text">Tilt your phone to slosh the tea!</div>
 
-<script>
-let engine, world;
-let items = [];
-let motionGranted = false;
-
-// 1. THE FIX: Requesting Sensor Access
-function requestAccess() {
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        // iOS 13+ logic
-        DeviceOrientationEvent.requestPermission()
-            .then(response => {
-                if (response == 'granted') {
-                    motionGranted = true;
-                    document.getElementById('permission-btn').style.display = 'none';
-                }
-            })
-            .catch(console.error);
-    } else {
-        // Android or older iOS (no permission usually needed, or already granted)
-        motionGranted = true;
-        document.getElementById('permission-btn').style.display = 'none';
-    }
-}
-
-function setup() {
-    createCanvas(windowWidth, windowHeight);
-    engine = Matter.Engine.create();
-    world = engine.world;
-
-    // Boundaries
-    let t = 100;
-    let ground = Matter.Bodies.rectangle(width/2, height+t/2, width, t, { isStatic: true });
-    let lWall = Matter.Bodies.rectangle(-t/2, height/2, t, height*2, { isStatic: true });
-    let rWall = Matter.Bodies.rectangle(width+t/2, height/2, t, height*2, { isStatic: true });
-    let roof = Matter.Bodies.rectangle(width/2, -t/2, width, t, { isStatic: true });
-    Matter.World.add(world, [ground, lWall, rWall, roof]);
-
-    // Spawn 30 items
-    for (let i = 0; i < 30; i++) {
-        let type = random(['boba', 'boba', 'strawberry', 'character']);
-        let r = type === 'boba' ? 15 : 30;
-        let b = Matter.Bodies.circle(random(width), random(height/2), r, { restitution: 0.5 });
-        b.label = type;
-        items.push(b);
-        Matter.World.add(world, b);
-    }
-}
-
-function draw() {
-    background('#FFF0F5');
-    Matter.Engine.update(engine);
-
-    // 2. APPLY TILT TO GRAVITY
-    if (motionGranted) {
-        // rotationX is front-to-back tilt, rotationY is side-to-side
-        // We map these to gravity (usually -1 to 1)
-        let gravX = map(rotationY, -30, 30, -1.5, 1.5);
-        let gravY = map(rotationX, -30, 30, -1.5, 1.5);
+    <script>
+        let engine, world;
+        let items = [];
+        let motionGranted = false;
         
-        engine.world.gravity.x = constrain(gravX, -2, 2);
-        engine.world.gravity.y = constrain(gravY, -2, 2);
-    } else if (windowWidth > 800) {
-        // Fallback for Desktop (Mouse)
-        engine.world.gravity.x = map(mouseX, 0, width, -1, 1);
-        engine.world.gravity.y = map(mouseY, 0, height, -1, 1);
-    }
+        // --- ADDED: Image variable ---
+        let bunnyImg;
 
-    // Drawing code
-    for (let b of items) {
-        push();
-        translate(b.position.x, b.position.y);
-        rotate(b.angle);
-        if (b.label === 'boba') {
-            fill(40); noStroke(); ellipse(0,0,30);
-        } else if (b.label === 'strawberry') {
-            fill('#ff4d4d'); ellipse(0,0,50,60); // Strawberry body
-            fill('#32cd32'); rect(-10, -35, 20, 10); // Simple Leaf
-        } else {
-            // Cute Character Face
-            fill(255); stroke(0); strokeWeight(2); ellipse(0,0,60);
-            fill(0); noStroke(); ellipse(-12,-5,5); ellipse(12,-5,5);
-            stroke(0); noFill(); arc(0, 5, 10, 10, 0, PI);
+        // --- ADDED: Preload function to load the bunny ---
+        function preload() {
+            bunnyImg = loadImage('assets/bunny.png');
         }
-        pop();
-    }
-}
 
-function windowResized() { resizeCanvas(windowWidth, windowHeight); }
-</script>
+        // 1. THE FIX: Requesting Sensor Access
+        function requestAccess() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // iOS 13+ logic
+                DeviceOrientationEvent.requestPermission()
+                    .then(response => {
+                        if (response == 'granted') {
+                            motionGranted = true;
+                            document.getElementById('permission-btn').style.display = 'none';
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Android or older iOS (no permission usually needed, or already granted)
+                motionGranted = true;
+                document.getElementById('permission-btn').style.display = 'none';
+            }
+        }
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            engine = Matter.Engine.create();
+            world = engine.world;
+
+            // Boundaries
+            let t = 100;
+            let ground = Matter.Bodies.rectangle(width / 2, height + t / 2, width, t, { isStatic: true });
+            let lWall = Matter.Bodies.rectangle(-t / 2, height / 2, t, height * 2, { isStatic: true });
+            let rWall = Matter.Bodies.rectangle(width + t / 2, height / 2, t, height * 2, { isStatic: true });
+            let roof = Matter.Bodies.rectangle(width / 2, -t / 2, width, t, { isStatic: true });
+            Matter.World.add(world, [ground, lWall, rWall, roof]);
+
+            // Spawn 30 items
+            for (let i = 0; i < 30; i++) {
+                let type = random(['boba', 'boba', 'strawberry', 'character']);
+                let r = type === 'boba' ? 15 : 30;
+                let b = Matter.Bodies.circle(random(width), random(height / 2), r, { restitution: 0.5 });
+                b.label = type;
+                items.push(b);
+                Matter.World.add(world, b);
+            }
+        }
+
+        function draw() {
+            background('#FFF0F5');
+            Matter.Engine.update(engine);
+
+            // --- SMART GRAVITY SYSTEM ---
+            if (motionGranted) {
+                // MOBILE MODE: Use Tilt
+                let gravX = map(rotationY, -30, 30, -1.5, 1.5);
+                let gravY = map(rotationX, -30, 30, -1.5, 1.5);
+                engine.world.gravity.x = constrain(gravX, -2, 2);
+                engine.world.gravity.y = constrain(gravY, -2, 2);
+            } else {
+                // DESKTOP MODE (or Mobile before button click): Use Mouse
+                let mouseGravX = map(mouseX, 0, width, -1.2, 1.2);
+                let mouseGravY = map(mouseY, 0, height, -1.2, 1.2);
+
+                if (mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
+                    engine.world.gravity.x = mouseGravX;
+                    engine.world.gravity.y = mouseGravY;
+                } else {
+                    engine.world.gravity.x = 0;
+                    engine.world.gravity.y = 1;
+                }
+            }
+
+            // --- DRAWING THE ITEMS ---
+            for (let b of items) {
+                push();
+                translate(b.position.x, b.position.y);
+                rotate(b.angle);
+
+                if (b.label === 'boba') {
+                    drawBoba();
+                } else if (b.label === 'strawberry') {
+                    drawStrawberry();
+                } else {
+                    // --- UPDATED: Using the bunny image here ---
+                    imageMode(CENTER);
+                    image(bunnyImg, 0, 0, 70, 70); 
+                }
+                pop();
+            }
+        }
+
+        // Helper functions
+        function drawBoba() {
+            fill(40); noStroke();
+            ellipse(0, 0, 30);
+            fill(255, 80); 
+            ellipse(-5, -5, 8);
+        }
+
+        function drawStrawberry() {
+            fill('#ff4d4d');
+            noStroke();
+            beginShape();
+            vertex(0, 25);
+            bezierVertex(-25, 20, -25, -20, 0, -25);
+            bezierVertex(25, -20, 25, 20, 0, 25);
+            endShape(CLOSE);
+            fill('#32cd32');
+            ellipse(0, -22, 20, 10);
+        }
+
+        function windowResized() { resizeCanvas(windowWidth, windowHeight); }
+    </script>
 </body>
+
 </html>
