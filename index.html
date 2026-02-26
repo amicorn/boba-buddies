@@ -75,8 +75,8 @@
 
         function mousePressed() {
             if (!motionGranted) {
-                // Button size matches the drawing logic below
-                let btnW = 220; 
+                // --- Updated to match the larger 320px width ---
+                let btnW = 320; 
                 let btnH = (buttonImg.height / buttonImg.width) * btnW;
                 if (mouseX > width/2 - btnW/2 && mouseX < width/2 + btnW/2 &&
                     mouseY > height/2 - btnH/2 && mouseY < height/2 + btnH/2) {
@@ -117,7 +117,6 @@
         }
 
         function draw() {
-            // Draw Background
             if (backgroundImg) {
                 let bgAspect = backgroundImg.width / backgroundImg.height;
                 let screenAspect = width / height;
@@ -136,11 +135,9 @@
             if (motionGranted) {
                 Matter.Engine.update(engine);
                 
-                // Motion/Tilt Logic
                 let gravX = (rotationY !== null) ? map(rotationY, -30, 30, -1.5, 1.5) : 0;
                 let gravY = (rotationX !== null) ? map(rotationX, -30, 30, -1.5, 1.5) : 1;
                 
-                // Desktop Mouse Fallback
                 if (!window.DeviceOrientationEvent || rotationX === null) {
                     gravX = map(mouseX, 0, width, -1.2, 1.2);
                     gravY = map(mouseY, 0, height, -1.2, 1.2);
@@ -162,20 +159,20 @@
                     pop();
                 }
             } else {
-                // --- DRAW CUSTOM BUTTON OVERLAY ---
+                // --- DRAW BIGGER CUSTOM BUTTON OVERLAY ---
                 imageMode(CENTER);
-                let btnW = 220; 
+                let btnW = 320; // Increased from 220
                 let btnH = (buttonImg.height / buttonImg.width) * btnW;
                 
                 image(buttonImg, width/2, height/2, btnW, btnH);
                 
-                // Cute Pixel Text with Dark Pink Border
+                // Pixel Text with Dark Pink Border
                 textFont('VT323');
-                textSize(32); // Slightly smaller as requested
+                textSize(32); 
                 textAlign(CENTER, CENTER);
                 
                 // Border/Stroke Effect
-                fill('#D02090'); // Dark Pink
+                fill('#D02090'); 
                 for(let x = -2; x <= 2; x++) {
                     for(let y = -2; y <= 2; y++) {
                         text("START", width/2 + x, height/2 + y);
