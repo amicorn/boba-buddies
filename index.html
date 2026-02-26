@@ -11,6 +11,21 @@
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <style>
         body { margin: 0; padding: 0; overflow: hidden; background: #FFF0F5; touch-action: none; }
+        
+        /* This is the secret fix for mobile */
+        #mobile-trigger {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 320px; /* Matches your btnW */
+            height: 150px; /* Approximate height of your boba_button */
+            z-index: 1000;
+            opacity: 0; /* Hidden but clickable */
+            cursor: pointer;
+            border: none;
+        }
+
         #ui-text {
             position: absolute; bottom: 20px; width: 100%; text-align: center;
             color: #ff69b4; font-family: 'VT323', monospace; font-size: 24px;
@@ -20,6 +35,8 @@
 </head>
 
 <body>
+    <button id="mobile-trigger" onclick="requestAccess()"></button>
+    
     <div id="ui-text">Tilt your phone to slosh the boba!</div>
 
     <script>
@@ -33,7 +50,6 @@
         let lastSoundTime = 0;
 
         function preload() {
-            // Loading Images
             backgroundImg = loadImage('assets/boba_background.png');
             buttonImg = loadImage('assets/boba_button.png');
 
@@ -47,42 +63,33 @@
             characterPool.push(loadImage('assets/strawberry_light.png'));
             characterPool.push(loadImage('assets/ice.png'));
 
-            // FAIL-SAFE SOUND LOADING
-            // If the file is missing, the program will now continue instead of hanging
             try {
-                collideSound = loadSound('assets/pop.mp3', 
-                    () => console.log("Sound Loaded!"), 
-                    () => console.log("Sound file missing - continuing without sound.")
-                );
-            } catch (e) {
-                console.log("Audio not supported or missing.");
-            }
+                collideSound = loadSound('assets/pop.mp3');
+            } catch (e) { console.log("Audio load error"); }
         }
 
         function requestAccess() {
-            // p5.sound requires this to enable audio context
+            // Unlocks audio for mobile
             if (window.userStartAudio) userStartAudio();
             
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
                     .then(response => {
-                        if (response == 'granted') motionGranted = true;
+                        if (response == 'granted') {
+                            startExperience();
+                        }
                     })
                     .catch(console.error);
             } else {
-                motionGranted = true;
+                startExperience();
             }
         }
 
-        function mousePressed() {
-            if (!motionGranted) {
-                let btnW = 320; 
-                let btnH = (buttonImg.height / buttonImg.width) * btnW;
-                if (mouseX > width/2 - btnW/2 && mouseX < width/2 + btnW/2 &&
-                    mouseY > height/2 - btnH/2 && mouseY < height/2 + btnH/2) {
-                    requestAccess();
-                }
-            }
+        function startExperience() {
+            motionGranted = true;
+            // Remove the invisible button so it doesn't block interactions with the boba
+            let btn = document.getElementById('mobile-trigger');
+            if (btn) btn.style.display = 'none';
         }
 
         function setup() {
@@ -97,10 +104,8 @@
             let roof = Matter.Bodies.rectangle(width / 2, -t / 2, width, t, { isStatic: true });
             Matter.World.add(world, [ground, lWall, rWall, roof]);
 
-            // Sound Event
             Matter.Events.on(engine, 'collisionStart', function(event) {
                 let currentTime = millis();
-                // Check if sound exists and is loaded before playing
                 if (motionGranted && collideSound && collideSound.isLoaded() && currentTime - lastSoundTime > 120) {
                     collideSound.rate(random(0.9, 1.1));
                     collideSound.play();
@@ -123,6 +128,7 @@
         }
 
         function draw() {
+            // Draw Background
             if (backgroundImg) {
                 let bgAspect = backgroundImg.width / backgroundImg.height;
                 let screenAspect = width / height;
@@ -134,8 +140,6 @@
                 }
                 imageMode(CENTER);
                 image(backgroundImg, width/2, height/2, drawW, drawH);
-            } else {
-                background('#FFF0F5');
             }
 
             if (motionGranted) {
@@ -143,7 +147,8 @@
                 let gravX = (rotationY !== null) ? map(rotationY, -30, 30, -1.5, 1.5) : 0;
                 let gravY = (rotationX !== null) ? map(rotationX, -30, 30, -1.5, 1.5) : 1;
                 
-                if (!window.DeviceOrientationEvent || rotationX === null) {
+                // Fallback for Desktop/Non-tilt devices
+                if (rotationX === null || rotationX === 0) {
                     gravX = map(mouseX, 0, width, -1.2, 1.2);
                     gravY = map(mouseY, 0, height, -1.2, 1.2);
                 }
@@ -161,10 +166,12 @@
                     pop();
                 }
             } else {
+                // DRAW BUTTON UI
                 imageMode(CENTER);
                 let btnW = 320; 
                 let btnH = (buttonImg.height / buttonImg.width) * btnW;
                 image(buttonImg, width/2, height/2, btnW, btnH);
+                
                 textFont('VT323');
                 textSize(32); 
                 textAlign(CENTER, CENTER);
