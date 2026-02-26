@@ -55,16 +55,15 @@
         let items = [];
         let motionGranted = false;
         
-        // --- Image variable ---
-        let bunnyImg;
+        let characterPool = [];
+        // Define scaleFactor here so we can use it in setup and draw
+        let globalScale = 0.08; 
 
-        // --- Preload function to load the bunny ---
         function preload() {
-            // Using the filename from your last code snippet
-            bunnyImg = loadImage('assets/bunny_big.png');
+            characterPool.push(loadImage('assets/bunny_big.png'));
+            characterPool.push(loadImage('assets/star.png'));
         }
 
-        // Requesting Sensor Access
         function requestAccess() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
@@ -86,7 +85,6 @@
             engine = Matter.Engine.create();
             world = engine.world;
 
-            // Boundaries
             let t = 100;
             let ground = Matter.Bodies.rectangle(width / 2, height + t / 2, width, t, { isStatic: true });
             let lWall = Matter.Bodies.rectangle(-t / 2, height / 2, t, height * 2, { isStatic: true });
@@ -94,15 +92,23 @@
             let roof = Matter.Bodies.rectangle(width / 2, -t / 2, width, t, { isStatic: true });
             Matter.World.add(world, [ground, lWall, rWall, roof]);
 
-            // Spawn 30 items
             for (let i = 0; i < 30; i++) {
                 let type = random(['boba', 'boba', 'strawberry', 'character']);
                 
-                // If it's your character, we give it a slightly larger physics body
-                let r = type === 'boba' ? 15 : (type === 'character' ? 40 : 30);
+                // PHYSICS RADIUS ADJUSTMENT
+                // r is the "hitbox". Since images are smaller, r must be smaller too.
+                let r;
+                if (type === 'boba') r = 12;
+                else if (type === 'strawberry') r = 20;
+                else r = 35; // Character hitbox
                 
                 let b = Matter.Bodies.circle(random(width), random(height / 2), r, { restitution: 0.5 });
                 b.label = type;
+
+                if (type === 'character') {
+                    b.characterImage = random(characterPool);
+                }
+
                 items.push(b);
                 Matter.World.add(world, b);
             }
@@ -112,7 +118,6 @@
             background('#FFF0F5');
             Matter.Engine.update(engine);
 
-            // --- SMART GRAVITY SYSTEM ---
             if (motionGranted) {
                 let gravX = map(rotationY, -30, 30, -1.5, 1.5);
                 let gravY = map(rotationX, -30, 30, -1.5, 1.5);
@@ -131,7 +136,6 @@
                 }
             }
 
-            // --- DRAWING THE ITEMS ---
             for (let b of items) {
                 push();
                 translate(b.position.x, b.position.y);
@@ -142,14 +146,13 @@
                 } else if (b.label === 'strawberry') {
                     drawStrawberry();
                 } else {
-                    // --- FIX: DRAWING THE BUNNY WITHOUT SQUISHING ---
-                    imageMode(CENTER);
-                    
-                    let targetHeight = 100; // Change this to make it bigger or smaller
-                    let aspect = bunnyImg.width / bunnyImg.height;
-                    let calculatedWidth = targetHeight * aspect;
-                    
-                    image(bunnyImg, 0, 0, calculatedWidth, targetHeight); 
+                    if (b.characterImage) {
+                        imageMode(CENTER);
+                        // Using the globalScale (0.08) for a much smaller appearance
+                        let displayWidth = b.characterImage.width * globalScale;
+                        let displayHeight = b.characterImage.height * globalScale;
+                        image(b.characterImage, 0, 0, displayWidth, displayHeight); 
+                    }
                 }
                 pop();
             }
@@ -157,21 +160,21 @@
 
         function drawBoba() {
             fill(40); noStroke();
-            ellipse(0, 0, 30);
+            ellipse(0, 0, 24); // Smaller boba to match character scale
             fill(255, 80); 
-            ellipse(-5, -5, 8);
+            ellipse(-4, -4, 6);
         }
 
         function drawStrawberry() {
             fill('#ff4d4d');
             noStroke();
             beginShape();
-            vertex(0, 25);
-            bezierVertex(-25, 20, -25, -20, 0, -25);
-            bezierVertex(25, -20, 25, 20, 0, 25);
+            vertex(0, 18);
+            bezierVertex(-18, 14, -18, -14, 0, -18);
+            bezierVertex(18, -14, 18, 14, 0, 18);
             endShape(CLOSE);
             fill('#32cd32');
-            ellipse(0, -22, 20, 10);
+            ellipse(0, -16, 14, 7);
         }
 
         function windowResized() { resizeCanvas(windowWidth, windowHeight); }
