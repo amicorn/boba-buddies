@@ -55,18 +55,18 @@
         let items = [];
         let motionGranted = false;
         
-        // --- ADDED: Image variable ---
+        // --- Image variable ---
         let bunnyImg;
 
-        // --- ADDED: Preload function to load the bunny ---
+        // --- Preload function to load the bunny ---
         function preload() {
+            // Using the filename from your last code snippet
             bunnyImg = loadImage('assets/bunny_big.png');
         }
 
-        // 1. THE FIX: Requesting Sensor Access
+        // Requesting Sensor Access
         function requestAccess() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // iOS 13+ logic
                 DeviceOrientationEvent.requestPermission()
                     .then(response => {
                         if (response == 'granted') {
@@ -76,7 +76,6 @@
                     })
                     .catch(console.error);
             } else {
-                // Android or older iOS (no permission usually needed, or already granted)
                 motionGranted = true;
                 document.getElementById('permission-btn').style.display = 'none';
             }
@@ -98,7 +97,10 @@
             // Spawn 30 items
             for (let i = 0; i < 30; i++) {
                 let type = random(['boba', 'boba', 'strawberry', 'character']);
-                let r = type === 'boba' ? 15 : 30;
+                
+                // If it's your character, we give it a slightly larger physics body
+                let r = type === 'boba' ? 15 : (type === 'character' ? 40 : 30);
+                
                 let b = Matter.Bodies.circle(random(width), random(height / 2), r, { restitution: 0.5 });
                 b.label = type;
                 items.push(b);
@@ -112,13 +114,11 @@
 
             // --- SMART GRAVITY SYSTEM ---
             if (motionGranted) {
-                // MOBILE MODE: Use Tilt
                 let gravX = map(rotationY, -30, 30, -1.5, 1.5);
                 let gravY = map(rotationX, -30, 30, -1.5, 1.5);
                 engine.world.gravity.x = constrain(gravX, -2, 2);
                 engine.world.gravity.y = constrain(gravY, -2, 2);
             } else {
-                // DESKTOP MODE (or Mobile before button click): Use Mouse
                 let mouseGravX = map(mouseX, 0, width, -1.2, 1.2);
                 let mouseGravY = map(mouseY, 0, height, -1.2, 1.2);
 
@@ -142,15 +142,19 @@
                 } else if (b.label === 'strawberry') {
                     drawStrawberry();
                 } else {
-                    // --- UPDATED: Using the bunny image here ---
+                    // --- FIX: DRAWING THE BUNNY WITHOUT SQUISHING ---
                     imageMode(CENTER);
-                    image(bunnyImg, 0, 0, 70, 70); 
+                    
+                    let targetHeight = 100; // Change this to make it bigger or smaller
+                    let aspect = bunnyImg.width / bunnyImg.height;
+                    let calculatedWidth = targetHeight * aspect;
+                    
+                    image(bunnyImg, 0, 0, calculatedWidth, targetHeight); 
                 }
                 pop();
             }
         }
 
-        // Helper functions
         function drawBoba() {
             fill(40); noStroke();
             ellipse(0, 0, 30);
