@@ -59,6 +59,7 @@
         let globalScale = 0.08; 
 
         function preload() {
+            // Your custom asset list
             characterPool.push(loadImage('assets/bunny_big.png'));
             characterPool.push(loadImage('assets/star_lighter.png'));
             characterPool.push(loadImage('assets/frog.png'));
@@ -90,7 +91,7 @@
             engine = Matter.Engine.create();
             world = engine.world;
 
-            // Boundaries
+            // Screen Boundaries
             let t = 100;
             let ground = Matter.Bodies.rectangle(width / 2, height + t / 2, width, t, { isStatic: true });
             let lWall = Matter.Bodies.rectangle(-t / 2, height / 2, t, height * 2, { isStatic: true });
@@ -98,36 +99,25 @@
             let roof = Matter.Bodies.rectangle(width / 2, -t / 2, width, t, { isStatic: true });
             Matter.World.add(world, [ground, lWall, rWall, roof]);
 
-            // --- 1. GUARANTEED SPAWN: 2 of each character ---
+            // --- 1. MANDATORY SPAWN: 2 of every asset ---
             for (let img of characterPool) {
                 for (let count = 0; count < 2; count++) {
-                    createItem('character', img);
+                    createItem(img);
                 }
             }
 
-            // --- 2. RANDOM FILL: Add more until we have a nice full screen ---
-            // Total of 40 items (including the 10 characters we just made)
-            for (let i = 0; i < 30; i++) {
-                let type = random(['boba', 'boba', 'strawberry', 'character']);
-                createItem(type);
+            // --- 2. EXTRA SPAWN: Randomize some extras so the screen feels full ---
+            // Adding 15 more random items from your pool
+            for (let i = 0; i < 15; i++) {
+                createItem(random(characterPool));
             }
         }
 
-        // HELPER FUNCTION: To handle adding bodies to the world cleanly
-        function createItem(type, specificImg = null) {
-            let r;
-            if (type === 'boba') r = 12;
-            else if (type === 'strawberry') r = 20;
-            else r = 35; // Character
-
+        // Updated Helper: Now only takes an image
+        function createItem(img) {
+            let r = 35; // Standard hitbox for your drawings
             let b = Matter.Bodies.circle(random(width), random(-200, height / 2), r, { restitution: 0.5 });
-            b.label = type;
-
-            if (type === 'character') {
-                // Use the specific image if provided, otherwise pick a random one
-                b.characterImage = specificImg ? specificImg : random(characterPool);
-            }
-
+            b.characterImage = img;
             items.push(b);
             Matter.World.add(world, b);
         }
@@ -136,6 +126,7 @@
             background('#FFF0F5');
             Matter.Engine.update(engine);
 
+            // Movement Logic
             if (motionGranted) {
                 let gravX = map(rotationY, -30, 30, -1.5, 1.5);
                 let gravY = map(rotationX, -30, 30, -1.5, 1.5);
@@ -154,44 +145,20 @@
                 }
             }
 
+            // Draw every item as its assigned image
             for (let b of items) {
                 push();
                 translate(b.position.x, b.position.y);
                 rotate(b.angle);
 
-                if (b.label === 'boba') {
-                    drawBoba();
-                } else if (b.label === 'strawberry') {
-                    drawStrawberry();
-                } else {
-                    if (b.characterImage) {
-                        imageMode(CENTER);
-                        let displayWidth = b.characterImage.width * globalScale;
-                        let displayHeight = b.characterImage.height * globalScale;
-                        image(b.characterImage, 0, 0, displayWidth, displayHeight); 
-                    }
+                if (b.characterImage) {
+                    imageMode(CENTER);
+                    let displayWidth = b.characterImage.width * globalScale;
+                    let displayHeight = b.characterImage.height * globalScale;
+                    image(b.characterImage, 0, 0, displayWidth, displayHeight); 
                 }
                 pop();
             }
-        }
-
-        function drawBoba() {
-            fill(40); noStroke();
-            ellipse(0, 0, 24);
-            fill(255, 80); 
-            ellipse(-4, -4, 6);
-        }
-
-        function drawStrawberry() {
-            fill('#ff4d4d');
-            noStroke();
-            beginShape();
-            vertex(0, 18);
-            bezierVertex(-18, 14, -18, -14, 0, -18);
-            bezierVertex(18, -14, 18, 14, 0, 18);
-            endShape(CLOSE);
-            fill('#32cd32');
-            ellipse(0, -16, 14, 7);
         }
 
         function windowResized() { resizeCanvas(windowWidth, windowHeight); }
