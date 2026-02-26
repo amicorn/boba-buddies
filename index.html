@@ -195,7 +195,6 @@
                 }
 
             } else {
-                // RESTORED: Original Start Screen Text Styling
                 imageMode(CENTER);
                 if (buttonImg) {
                     let btnW = 320; let btnH = (buttonImg.height / buttonImg.width) * btnW;
@@ -203,7 +202,6 @@
                 }
                 textFont('VT323'); textSize(32); textAlign(CENTER, CENTER);
                 fill('#D02090');
-                // The thick shadow loop from the previous version
                 for(let x=-2; x<=2; x++) { 
                     for(let y=-2; y<=2; y++) {
                         text("START", width/2+x, height/2+y); 
@@ -228,6 +226,7 @@
             let cardW = min(width * 0.9, 420);
             let cardH = min(height * 0.8, 520);
             
+            // --- MAIN CARD ---
             rectMode(CENTER);
             stroke('#D02090');
             strokeWeight(5);
@@ -238,6 +237,24 @@
             strokeWeight(2);
             rect(0, 0, cardW - 20, cardH - 20, 15);
             
+            // --- DECORATIVE BORDER IMAGES ---
+            // Place images at corners and midpoints
+            let decorScale = globalScale * 0.8; 
+            imageMode(CENTER);
+            
+            // Corners
+            image(characterPool[0], -cardW/2, -cardH/2, characterPool[0].width * decorScale, characterPool[0].height * decorScale);
+            image(characterPool[1], cardW/2, -cardH/2, characterPool[1].width * decorScale, characterPool[1].height * decorScale);
+            image(characterPool[3], -cardW/2, cardH/2, characterPool[3].width * decorScale, characterPool[3].height * decorScale);
+            image(characterPool[5], cardW/2, cardH/2, characterPool[5].width * decorScale, characterPool[5].height * decorScale);
+            
+            // Mid-points for extra decoration
+            image(characterPool[7], 0, -cardH/2, characterPool[7].width * decorScale, characterPool[7].height * decorScale);
+            image(characterPool[8], 0, cardH/2, characterPool[8].width * decorScale, characterPool[8].height * decorScale);
+            image(characterPool[2], -cardW/2, 0, characterPool[2].width * decorScale, characterPool[2].height * decorScale);
+            image(characterPool[4], cardW/2, 0, characterPool[4].width * decorScale, characterPool[4].height * decorScale);
+
+            // --- TEXT ---
             noStroke();
             fill('#D02090');
             textFont('VT323');
@@ -249,7 +266,7 @@
             textSize(dynamicSize);
             textLeading(dynamicSize * 1.3);
             
-            text(msg, 0, 0, cardW - 40, cardH - 40);
+            text(msg, 0, 0, cardW - 60, cardH - 60);
             pop();
         }
 
