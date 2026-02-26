@@ -7,6 +7,7 @@
     <title>Strawberry Boba Gift 🍓</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
@@ -16,30 +17,14 @@
             touch-action: none;
         }
 
-        #permission-btn {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px 40px;
-            font-size: 20px;
-            background: #ff69b4;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            z-index: 100;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            font-family: sans-serif;
-        }
-
         #ui-text {
             position: absolute;
             bottom: 20px;
             width: 100%;
             text-align: center;
             color: #ff69b4;
-            font-family: sans-serif;
+            font-family: 'VT323', monospace;
+            font-size: 24px;
             pointer-events: none;
             z-index: 10;
         }
@@ -47,7 +32,6 @@
 </head>
 
 <body>
-    <button id="permission-btn" onclick="requestAccess()">Click to Start Boba Magic! ✨</button>
     <div id="ui-text">Tilt your phone to slosh the tea!</div>
 
     <script>
@@ -57,13 +41,13 @@
         
         let characterPool = [];
         let globalScale = 0.08; 
-        let backgroundImg; // Variable to store the background
+        let backgroundImg;
+        let buttonImg;
 
         function preload() {
-            // 1. Load your background image
             backgroundImg = loadImage('assets/boba_background.png');
+            buttonImg = loadImage('assets/boba_button.png');
 
-            // 2. Load character assets
             characterPool.push(loadImage('assets/bunny_big.png'));
             characterPool.push(loadImage('assets/star_lighter.png'));
             characterPool.push(loadImage('assets/star_light.png'));
@@ -81,13 +65,23 @@
                     .then(response => {
                         if (response == 'granted') {
                             motionGranted = true;
-                            document.getElementById('permission-btn').style.display = 'none';
                         }
                     })
                     .catch(console.error);
             } else {
                 motionGranted = true;
-                document.getElementById('permission-btn').style.display = 'none';
+            }
+        }
+
+        function mousePressed() {
+            if (!motionGranted) {
+                // Button size matches the drawing logic below
+                let btnW = 220; 
+                let btnH = (buttonImg.height / buttonImg.width) * btnW;
+                if (mouseX > width/2 - btnW/2 && mouseX < width/2 + btnW/2 &&
+                    mouseY > height/2 - btnH/2 && mouseY < height/2 + btnH/2) {
+                    requestAccess();
+                }
             }
         }
 
@@ -123,59 +117,74 @@
         }
 
         function draw() {
-            // --- DRAW BACKGROUND ---
+            // Draw Background
             if (backgroundImg) {
-                // This logic ensures the background covers the screen without distortion
                 let bgAspect = backgroundImg.width / backgroundImg.height;
                 let screenAspect = width / height;
                 let drawW, drawH;
-
                 if (screenAspect > bgAspect) {
-                    drawW = width;
-                    drawH = width / bgAspect;
+                    drawW = width; drawH = width / bgAspect;
                 } else {
-                    drawH = height;
-                    drawW = height * bgAspect;
+                    drawH = height; drawW = height * bgAspect;
                 }
-                
                 imageMode(CENTER);
                 image(backgroundImg, width/2, height/2, drawW, drawH);
             } else {
                 background('#FFF0F5');
             }
 
-            Matter.Engine.update(engine);
-
             if (motionGranted) {
-                let gravX = map(rotationY, -30, 30, -1.5, 1.5);
-                let gravY = map(rotationX, -30, 30, -1.5, 1.5);
+                Matter.Engine.update(engine);
+                
+                // Motion/Tilt Logic
+                let gravX = (rotationY !== null) ? map(rotationY, -30, 30, -1.5, 1.5) : 0;
+                let gravY = (rotationX !== null) ? map(rotationX, -30, 30, -1.5, 1.5) : 1;
+                
+                // Desktop Mouse Fallback
+                if (!window.DeviceOrientationEvent || rotationX === null) {
+                    gravX = map(mouseX, 0, width, -1.2, 1.2);
+                    gravY = map(mouseY, 0, height, -1.2, 1.2);
+                }
+
                 engine.world.gravity.x = constrain(gravX, -2, 2);
                 engine.world.gravity.y = constrain(gravY, -2, 2);
+
+                for (let b of items) {
+                    push();
+                    translate(b.position.x, b.position.y);
+                    rotate(b.angle);
+                    if (b.characterImage) {
+                        imageMode(CENTER);
+                        let displayWidth = b.characterImage.width * globalScale;
+                        let displayHeight = b.characterImage.height * globalScale;
+                        image(b.characterImage, 0, 0, displayWidth, displayHeight); 
+                    }
+                    pop();
+                }
             } else {
-                let mouseGravX = map(mouseX, 0, width, -1.2, 1.2);
-                let mouseGravY = map(mouseY, 0, height, -1.2, 1.2);
-
-                if (mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
-                    engine.world.gravity.x = mouseGravX;
-                    engine.world.gravity.y = mouseGravY;
-                } else {
-                    engine.world.gravity.x = 0;
-                    engine.world.gravity.y = 1;
+                // --- DRAW CUSTOM BUTTON OVERLAY ---
+                imageMode(CENTER);
+                let btnW = 220; 
+                let btnH = (buttonImg.height / buttonImg.width) * btnW;
+                
+                image(buttonImg, width/2, height/2, btnW, btnH);
+                
+                // Cute Pixel Text with Dark Pink Border
+                textFont('VT323');
+                textSize(32); // Slightly smaller as requested
+                textAlign(CENTER, CENTER);
+                
+                // Border/Stroke Effect
+                fill('#D02090'); // Dark Pink
+                for(let x = -2; x <= 2; x++) {
+                    for(let y = -2; y <= 2; y++) {
+                        text("START", width/2 + x, height/2 + y);
+                    }
                 }
-            }
-
-            for (let b of items) {
-                push();
-                translate(b.position.x, b.position.y);
-                rotate(b.angle);
-
-                if (b.characterImage) {
-                    imageMode(CENTER);
-                    let displayWidth = b.characterImage.width * globalScale;
-                    let displayHeight = b.characterImage.height * globalScale;
-                    image(b.characterImage, 0, 0, displayWidth, displayHeight); 
-                }
-                pop();
+                
+                // Main White Text
+                fill(255);
+                text("START", width/2, height/2);
             }
         }
 
