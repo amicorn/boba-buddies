@@ -8,152 +8,110 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <style>
         body { margin: 0; padding: 0; overflow: hidden; background: #FFF0F5; touch-action: none; }
-        #ui { 
+        #permission-btn {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            padding: 20px 40px; font-size: 20px; background: #ff69b4; color: white;
+            border: none; border-radius: 50px; cursor: pointer; z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-family: sans-serif;
+        }
+        #ui-text { 
             position: absolute; bottom: 20px; width: 100%; text-align: center; 
-            color: #ff69b4; font-family: 'Comic Sans MS', cursive; pointer-events: none;
-            z-index: 10;
+            color: #ff69b4; font-family: sans-serif; pointer-events: none; z-index: 10;
         }
     </style>
 </head>
 <body>
-    <div id="ui">Tap to Shake & Reset! 🍓</div>
+    <button id="permission-btn" onclick="requestAccess()">Click to Start Boba Magic! ✨</button>
+    <div id="ui-text">Tilt your phone to slosh the tea!</div>
 
 <script>
 let engine, world;
 let items = [];
-let boundaries = [];
+let motionGranted = false;
+
+// 1. THE FIX: Requesting Sensor Access
+function requestAccess() {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        // iOS 13+ logic
+        DeviceOrientationEvent.requestPermission()
+            .then(response => {
+                if (response == 'granted') {
+                    motionGranted = true;
+                    document.getElementById('permission-btn').style.display = 'none';
+                }
+            })
+            .catch(console.error);
+    } else {
+        // Android or older iOS (no permission usually needed, or already granted)
+        motionGranted = true;
+        document.getElementById('permission-btn').style.display = 'none';
+    }
+}
 
 function setup() {
-    // Create canvas to fit the screen exactly
     createCanvas(windowWidth, windowHeight);
-    
     engine = Matter.Engine.create();
     world = engine.world;
 
-    // Build the "Cup" walls relative to the screen size
-    createCup();
+    // Boundaries
+    let t = 100;
+    let ground = Matter.Bodies.rectangle(width/2, height+t/2, width, t, { isStatic: true });
+    let lWall = Matter.Bodies.rectangle(-t/2, height/2, t, height*2, { isStatic: true });
+    let rWall = Matter.Bodies.rectangle(width+t/2, height/2, t, height*2, { isStatic: true });
+    let roof = Matter.Bodies.rectangle(width/2, -t/2, width, t, { isStatic: true });
+    Matter.World.add(world, [ground, lWall, rWall, roof]);
 
-    // Spawn 15 Boba pearls and 5 Strawberries
-    for (let i = 0; i < 20; i++) {
-        spawnItem(random(width * 0.3, width * 0.7), random(height * 0.2, height * 0.5));
+    // Spawn 30 items
+    for (let i = 0; i < 30; i++) {
+        let type = random(['boba', 'boba', 'strawberry', 'character']);
+        let r = type === 'boba' ? 15 : 30;
+        let b = Matter.Bodies.circle(random(width), random(height/2), r, { restitution: 0.5 });
+        b.label = type;
+        items.push(b);
+        Matter.World.add(world, b);
     }
-}
-
-function createCup() {
-    // Remove old walls if window is resized
-    if (boundaries.length > 0) {
-        Matter.World.remove(world, boundaries);
-        boundaries = [];
-    }
-
-    let thickness = 100; 
-    // Walls are placed just slightly off-screen or on the edge
-    let ground = Matter.Bodies.rectangle(width/2, height + thickness/2, width, thickness, { isStatic: true });
-    let leftWall = Matter.Bodies.rectangle(-thickness/2, height/2, thickness, height * 2, { isStatic: true });
-    let rightWall = Matter.Bodies.rectangle(width + thickness/2, height/2, thickness, height * 2, { isStatic: true });
-    let ceiling = Matter.Bodies.rectangle(width/2, -thickness/2, width, thickness, { isStatic: true });
-
-    boundaries = [ground, leftWall, rightWall, ceiling];
-    Matter.World.add(world, boundaries);
-}
-
-function spawnItem(x, y) {
-    let type = random(['boba', 'boba', 'strawberry', 'character']);
-    let radius = type === 'boba' ? 18 : 35;
-    
-    let body = Matter.Bodies.circle(x, y, radius, {
-        restitution: 0.6,
-        friction: 0.1,
-        density: 0.001
-    });
-    
-    body.label = type;
-    items.push(body);
-    Matter.World.add(world, body);
 }
 
 function draw() {
-    background('#FFF0F5'); // Strawberry Milk Pink
+    background('#FFF0F5');
     Matter.Engine.update(engine);
 
-    // --- PHYSICS CONTROL ---
-    if (window.innerWidth > 800) {
-        // DESKTOP: Gravity follows Mouse
-        let gx = map(mouseX, 0, width, -1.5, 1.5);
-        let gy = map(mouseY, 0, height, -1.5, 1.5);
-        engine.world.gravity.x = gx;
-        engine.world.gravity.y = gy;
-    } else {
-        // MOBILE: Gravity follows Tilt
-        let tx = map(rotationY, -30, 30, -1.5, 1.5);
-        let ty = map(rotationX, -30, 30, -1.5, 1.5);
-        engine.world.gravity.x = tx || 0;
-        engine.world.gravity.y = ty || 1; // Default gravity down
+    // 2. APPLY TILT TO GRAVITY
+    if (motionGranted) {
+        // rotationX is front-to-back tilt, rotationY is side-to-side
+        // We map these to gravity (usually -1 to 1)
+        let gravX = map(rotationY, -30, 30, -1.5, 1.5);
+        let gravY = map(rotationX, -30, 30, -1.5, 1.5);
+        
+        engine.world.gravity.x = constrain(gravX, -2, 2);
+        engine.world.gravity.y = constrain(gravY, -2, 2);
+    } else if (windowWidth > 800) {
+        // Fallback for Desktop (Mouse)
+        engine.world.gravity.x = map(mouseX, 0, width, -1, 1);
+        engine.world.gravity.y = map(mouseY, 0, height, -1, 1);
     }
 
-    // --- DRAWING ---
-    for (let body of items) {
-        let pos = body.position;
+    // Drawing code
+    for (let b of items) {
         push();
-        translate(pos.x, pos.y);
-        rotate(body.angle);
-        
-        if (body.label === 'boba') {
-            fill(45, 30, 20); // Dark brown/black
-            noStroke();
-            ellipse(0, 0, 36);
-            fill(255, 50); // Shine
-            ellipse(-5, -5, 10);
-        } else if (body.label === 'strawberry') {
-            drawStrawberry();
+        translate(b.position.x, b.position.y);
+        rotate(b.angle);
+        if (b.label === 'boba') {
+            fill(40); noStroke(); ellipse(0,0,30);
+        } else if (b.label === 'strawberry') {
+            fill('#ff4d4d'); ellipse(0,0,50,60); // Strawberry body
+            fill('#32cd32'); rect(-10, -35, 20, 10); // Simple Leaf
         } else {
-            drawCuteFace();
+            // Cute Character Face
+            fill(255); stroke(0); strokeWeight(2); ellipse(0,0,60);
+            fill(0); noStroke(); ellipse(-12,-5,5); ellipse(12,-5,5);
+            stroke(0); noFill(); arc(0, 5, 10, 10, 0, PI);
         }
         pop();
     }
 }
 
-function drawStrawberry() {
-    fill('#FF4D4D');
-    noStroke();
-    ellipse(0, 0, 50, 60);
-    fill('#32CD32'); // Leaf
-    triangle(-15, -25, 15, -25, 0, -40);
-}
-
-function drawCuteFace() {
-    // A simple "Line Friend" Style Bunny/Bear
-    fill(255);
-    stroke(0);
-    strokeWeight(2);
-    ellipse(0, 0, 70); // Face
-    fill(0);
-    noStroke();
-    ellipse(-15, -5, 6); // Left Eye
-    ellipse(15, -5, 6);  // Right Eye
-    fill('#FFB6C1');
-    ellipse(-22, 10, 10, 5); // Blush
-    ellipse(22, 10, 10, 5);  // Blush
-}
-
-// RESET FUNCTION: If things get lost, click to bring them back
-function mousePressed() {
-    // Request iOS permissions
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        DeviceOrientationEvent.requestPermission();
-    }
-    
-    // Teleport all items to the center
-    for (let body of items) {
-        Matter.Body.setPosition(body, { x: width/2, y: height/2 });
-        Matter.Body.setVelocity(body, { x: random(-5, 5), y: random(-5, 5) });
-    }
-}
-
-function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
-    createCup();
-}
+function windowResized() { resizeCanvas(windowWidth, windowHeight); }
 </script>
 </body>
 </html>
