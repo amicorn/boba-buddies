@@ -57,9 +57,13 @@
         
         let characterPool = [];
         let globalScale = 0.08; 
+        let backgroundImg; // Variable to store the background
 
         function preload() {
-            // Your custom asset list
+            // 1. Load your background image
+            backgroundImg = loadImage('assets/boba_background.png');
+
+            // 2. Load character assets
             characterPool.push(loadImage('assets/bunny_big.png'));
             characterPool.push(loadImage('assets/star_lighter.png'));
             characterPool.push(loadImage('assets/star_light.png'));
@@ -92,7 +96,6 @@
             engine = Matter.Engine.create();
             world = engine.world;
 
-            // Screen Boundaries
             let t = 100;
             let ground = Matter.Bodies.rectangle(width / 2, height + t / 2, width, t, { isStatic: true });
             let lWall = Matter.Bodies.rectangle(-t / 2, height / 2, t, height * 2, { isStatic: true });
@@ -100,23 +103,19 @@
             let roof = Matter.Bodies.rectangle(width / 2, -t / 2, width, t, { isStatic: true });
             Matter.World.add(world, [ground, lWall, rWall, roof]);
 
-            // --- 1. MANDATORY SPAWN: 2 of every asset ---
             for (let img of characterPool) {
                 for (let count = 0; count < 2; count++) {
                     createItem(img);
                 }
             }
 
-            // --- 2. EXTRA SPAWN: Randomize some extras so the screen feels full ---
-            // Adding 15 more random items from your pool
             for (let i = 0; i < 15; i++) {
                 createItem(random(characterPool));
             }
         }
 
-        // Updated Helper: Now only takes an image
         function createItem(img) {
-            let r = 35; // Standard hitbox for your drawings
+            let r = 35; 
             let b = Matter.Bodies.circle(random(width), random(-200, height / 2), r, { restitution: 0.5 });
             b.characterImage = img;
             items.push(b);
@@ -124,10 +123,29 @@
         }
 
         function draw() {
-            background('#FFF0F5');
+            // --- DRAW BACKGROUND ---
+            if (backgroundImg) {
+                // This logic ensures the background covers the screen without distortion
+                let bgAspect = backgroundImg.width / backgroundImg.height;
+                let screenAspect = width / height;
+                let drawW, drawH;
+
+                if (screenAspect > bgAspect) {
+                    drawW = width;
+                    drawH = width / bgAspect;
+                } else {
+                    drawH = height;
+                    drawW = height * bgAspect;
+                }
+                
+                imageMode(CENTER);
+                image(backgroundImg, width/2, height/2, drawW, drawH);
+            } else {
+                background('#FFF0F5');
+            }
+
             Matter.Engine.update(engine);
 
-            // Movement Logic
             if (motionGranted) {
                 let gravX = map(rotationY, -30, 30, -1.5, 1.5);
                 let gravY = map(rotationX, -30, 30, -1.5, 1.5);
@@ -146,7 +164,6 @@
                 }
             }
 
-            // Draw every item as its assigned image
             for (let b of items) {
                 push();
                 translate(b.position.x, b.position.y);
