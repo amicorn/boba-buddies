@@ -7,26 +7,14 @@
     <title>Strawberry Boba Gift 🍓</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background: #FFF0F5;
-            touch-action: none;
-        }
-
+        body { margin: 0; padding: 0; overflow: hidden; background: #FFF0F5; touch-action: none; }
         #ui-text {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            text-align: center;
-            color: #ff69b4;
-            font-family: 'VT323', monospace;
-            font-size: 24px;
-            pointer-events: none;
-            z-index: 10;
+            position: absolute; bottom: 20px; width: 100%; text-align: center;
+            color: #ff69b4; font-family: 'VT323', monospace; font-size: 24px;
+            pointer-events: none; z-index: 10;
         }
     </style>
 </head>
@@ -38,13 +26,14 @@
         let engine, world;
         let items = [];
         let motionGranted = false;
-        
         let characterPool = [];
         let globalScale = 0.08; 
-        let backgroundImg;
-        let buttonImg;
+        let backgroundImg, buttonImg;
+        let collideSound; 
+        let lastSoundTime = 0;
 
         function preload() {
+            // Loading Images
             backgroundImg = loadImage('assets/boba_background.png');
             buttonImg = loadImage('assets/boba_button.png');
 
@@ -57,15 +46,27 @@
             characterPool.push(loadImage('assets/bear_bow.png'));
             characterPool.push(loadImage('assets/strawberry_light.png'));
             characterPool.push(loadImage('assets/ice.png'));
+
+            // FAIL-SAFE SOUND LOADING
+            // If the file is missing, the program will now continue instead of hanging
+            try {
+                collideSound = loadSound('assets/pop.mp3', 
+                    () => console.log("Sound Loaded!"), 
+                    () => console.log("Sound file missing - continuing without sound.")
+                );
+            } catch (e) {
+                console.log("Audio not supported or missing.");
+            }
         }
 
         function requestAccess() {
+            // p5.sound requires this to enable audio context
+            if (window.userStartAudio) userStartAudio();
+            
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
                     .then(response => {
-                        if (response == 'granted') {
-                            motionGranted = true;
-                        }
+                        if (response == 'granted') motionGranted = true;
                     })
                     .catch(console.error);
             } else {
@@ -75,7 +76,6 @@
 
         function mousePressed() {
             if (!motionGranted) {
-                // --- Updated to match the larger 320px width ---
                 let btnW = 320; 
                 let btnH = (buttonImg.height / buttonImg.width) * btnW;
                 if (mouseX > width/2 - btnW/2 && mouseX < width/2 + btnW/2 &&
@@ -97,15 +97,21 @@
             let roof = Matter.Bodies.rectangle(width / 2, -t / 2, width, t, { isStatic: true });
             Matter.World.add(world, [ground, lWall, rWall, roof]);
 
-            for (let img of characterPool) {
-                for (let count = 0; count < 2; count++) {
-                    createItem(img);
+            // Sound Event
+            Matter.Events.on(engine, 'collisionStart', function(event) {
+                let currentTime = millis();
+                // Check if sound exists and is loaded before playing
+                if (motionGranted && collideSound && collideSound.isLoaded() && currentTime - lastSoundTime > 120) {
+                    collideSound.rate(random(0.9, 1.1));
+                    collideSound.play();
+                    lastSoundTime = currentTime;
                 }
-            }
+            });
 
-            for (let i = 0; i < 15; i++) {
-                createItem(random(characterPool));
+            for (let img of characterPool) {
+                for (let count = 0; count < 2; count++) createItem(img);
             }
+            for (let i = 0; i < 15; i++) createItem(random(characterPool));
         }
 
         function createItem(img) {
@@ -134,7 +140,6 @@
 
             if (motionGranted) {
                 Matter.Engine.update(engine);
-                
                 let gravX = (rotationY !== null) ? map(rotationY, -30, 30, -1.5, 1.5) : 0;
                 let gravY = (rotationX !== null) ? map(rotationX, -30, 30, -1.5, 1.5) : 1;
                 
@@ -142,7 +147,6 @@
                     gravX = map(mouseX, 0, width, -1.2, 1.2);
                     gravY = map(mouseY, 0, height, -1.2, 1.2);
                 }
-
                 engine.world.gravity.x = constrain(gravX, -2, 2);
                 engine.world.gravity.y = constrain(gravY, -2, 2);
 
@@ -152,34 +156,22 @@
                     rotate(b.angle);
                     if (b.characterImage) {
                         imageMode(CENTER);
-                        let displayWidth = b.characterImage.width * globalScale;
-                        let displayHeight = b.characterImage.height * globalScale;
-                        image(b.characterImage, 0, 0, displayWidth, displayHeight); 
+                        image(b.characterImage, 0, 0, b.characterImage.width * globalScale, b.characterImage.height * globalScale); 
                     }
                     pop();
                 }
             } else {
-                // --- DRAW BIGGER CUSTOM BUTTON OVERLAY ---
                 imageMode(CENTER);
-                let btnW = 320; // Increased from 220
+                let btnW = 320; 
                 let btnH = (buttonImg.height / buttonImg.width) * btnW;
-                
                 image(buttonImg, width/2, height/2, btnW, btnH);
-                
-                // Pixel Text with Dark Pink Border
                 textFont('VT323');
                 textSize(32); 
                 textAlign(CENTER, CENTER);
-                
-                // Border/Stroke Effect
                 fill('#D02090'); 
                 for(let x = -2; x <= 2; x++) {
-                    for(let y = -2; y <= 2; y++) {
-                        text("START", width/2 + x, height/2 + y);
-                    }
+                    for(let y = -2; y <= 2; y++) text("START", width/2 + x, height/2 + y);
                 }
-                
-                // Main White Text
                 fill(255);
                 text("START", width/2, height/2);
             }
@@ -188,5 +180,4 @@
         function windowResized() { resizeCanvas(windowWidth, windowHeight); }
     </script>
 </body>
-
 </html>
