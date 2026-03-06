@@ -22,9 +22,9 @@ This game was inspired by my friend, who likes the korean Line friends character
 **Characters:** 
 - The cast includes:
    -  🐻 Brown (bear)
-   -  🐰 Cony (rabbit),
-   -  🐥 Sally (chick),
-   -  🎀 Choco (bear with pink bow),
+   -  🐰 Cony (rabbit)
+   -  🐥 Sally (chick)
+   -  🎀 Choco (bear with pink bow)
    -  🐸 Leonard (frog)
 -  yes i turned them all into cute face bubbles you can pop lol
   
