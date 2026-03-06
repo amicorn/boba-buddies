@@ -24,7 +24,7 @@ This game is 100% hand-drawn and has completely custom assets.
 
 <div align="left">
   <video src="https://github.com/user-attachments/assets/e37edd43-383d-4b70-94c8-e40f615a1299" width="320" controls></video>
-  <p><em>Tilt to slosh, tap to pop!</em></p>
+  <p><em>Tilt to slosh, tap to pop! Turn on sound :) </em></p>
 </div>
 
 
@@ -32,9 +32,9 @@ This game is 100% hand-drawn and has completely custom assets.
 
 | Start Screen | Gameplay |
 | :---: | :---: |
-| <img src="screenshots/start_screen_mobile.jpeg" width="400"> | <img src="screenshots/bobas_wall_mobile.jpeg" width="400"> |
+| <img src="screenshots/start_screen_mobile.jpeg" width="300"> | <img src="screenshots/bobas_wall_mobile.jpeg" width="300"> |
 | **Falling Bobas** | **Birthday Card** |
-| <img src="screenshots/falling_bobas_mobile.jpeg" width="400"> | <img src="screenshots/birthday_card_mobile.jpeg" width="400"> |
+| <img src="screenshots/falling_bobas_mobile.jpeg" width="300"> | <img src="screenshots/birthday_card_mobile.jpeg" width="300"> |
 
 ## ✨ Inspiration
 This game was inspired by my friend, who likes the korean Line friends characters and boba.
