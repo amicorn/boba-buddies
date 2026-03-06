@@ -114,6 +114,7 @@ python -m http.server
 ```
 
 4. Open in Browser:
+   
 Go to http://localhost:8000 and enjoy!
 
 ## 📂 File Structure
