@@ -219,16 +219,14 @@
                 document.getElementById('ui-text').style.display = 'none';
             }
 
-            // --- PERMANENT TITLE SIGNATURE ---
+            // --- PERMANENT TITLE SIGNATURE (ADJUSTED HEIGHT) ---
             if (titleSigImg) {
                 imageMode(CENTER);
-                // Bigger Scale: 90% of screen width or max 500px
                 let sigW = min(width * 0.9, 500); 
                 let sigH = (titleSigImg.height / titleSigImg.width) * sigW;
                 
-                // Fixed position centered below the Start button / Birthday Card area
-                // Using 160px offset from the center of the screen
-                image(titleSigImg, width/2, height/2 + 160, sigW, sigH);
+                // Moved up slightly (+120 from center instead of +160)
+                image(titleSigImg, width/2, height/2 + 120, sigW, sigH);
             }
         }
 
