@@ -20,6 +20,16 @@ This game is 100% hand-drawn and has completely custom assets.
 
 <img src="screenshots/cover_art.jpeg" width="500">
 
+**Demo video**
+
+<div align="left">
+  <video src="https://github.com/user-attachments/assets/e37edd43-383d-4b70-94c8-e40f615a1299" width="320" controls></video>
+  <p><em>Tilt to slosh, tap to pop!</em></p>
+</div>
+
+
+**Screenshots**
+
 | Start Screen | Gameplay |
 | :---: | :---: |
 | <img src="screenshots/start_screen_mobile.jpeg" width="400"> | <img src="screenshots/bobas_wall_mobile.jpeg" width="400"> |
