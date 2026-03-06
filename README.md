@@ -92,7 +92,7 @@ To play the game on your own machine:
 
 ```
 Bash
-git clone https://github.com/your-username/strawberry-boba-gift.git
+git clone https://github.com/amicorn/boba-besties.git
 ```
 
 2. Navigate to the folder:
