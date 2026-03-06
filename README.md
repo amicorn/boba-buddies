@@ -94,6 +94,11 @@ Built with the following open source libraries:
 - **Google Fonts**: Retro 'VT323' pixel-art font
   - this is for the "START" button text
   - link: https://fonts.google.com/specimen/VT323
+ 
+## 🎨 Assets
+- all art assets, images, buttons, backgrounds, title text/game logo, characters/sprites, etc hand-drawn by Amy
+- "pop" sound effect from pixabay
+  - link: pop by dragon-studio: https://pixabay.com/sound-effects/search/boba%20pop/
 
 ## 🚀 How to Run Locally
 To play the game on your own machine:
