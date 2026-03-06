@@ -26,7 +26,7 @@
 
 <body>
     <button id="mobile-trigger" onclick="requestAccess()"></button>
-    <div id="ui-text">Tilt to slosh, tap to pop!</div>
+    <div id="ui-text">Tilt your phone to slosh the tea, tap the buddies to pop them!</div>
 
     <script>
         let engine, world;
@@ -34,7 +34,7 @@
         let motionGranted = false;
         let characterPool = [];
         let globalScale = 0.064; 
-        let backgroundImg, buttonImg;
+        let backgroundImg, buttonImg, titleSigImg; 
         let popSound; 
         
         let cardScale = 0;
@@ -42,8 +42,9 @@
         let gameStarted = false;
 
         function preload() {
-            backgroundImg = loadImage('assets/boba_background.png');
+            backgroundImg = loadImage('assets/background.png');
             buttonImg = loadImage('assets/boba_button.png');
+            titleSigImg = loadImage('assets/title_sig.png'); 
             characterPool.push(
                 loadImage('assets/bunny_big.png'), loadImage('assets/star_lighter.png'), 
                 loadImage('assets/star_light.png'), loadImage('assets/frog.png'), 
@@ -196,24 +197,38 @@
 
             } else {
                 imageMode(CENTER);
+                let startBtnY = height / 2;
                 if (buttonImg) {
                     let btnW = 320; let btnH = (buttonImg.height / buttonImg.width) * btnW;
-                    image(buttonImg, width/2, height/2, btnW, btnH);
+                    image(buttonImg, width/2, startBtnY, btnW, btnH);
                 }
+
                 textFont('VT323'); textSize(32); textAlign(CENTER, CENTER);
                 fill('#D02090');
                 for(let x=-2; x<=2; x++) { 
                     for(let y=-2; y<=2; y++) {
-                        text("START", width/2+x, height/2+y); 
+                        text("START", width/2+x, startBtnY+y); 
                     }
                 }
                 fill(255); 
-                text("START", width/2, height/2);
+                text("START", width/2, startBtnY);
             }
 
             if (showCard) {
                 drawBirthdayCard();
                 document.getElementById('ui-text').style.display = 'none';
+            }
+
+            // --- PERMANENT TITLE SIGNATURE ---
+            if (titleSigImg) {
+                imageMode(CENTER);
+                // Bigger Scale: 90% of screen width or max 500px
+                let sigW = min(width * 0.9, 500); 
+                let sigH = (titleSigImg.height / titleSigImg.width) * sigW;
+                
+                // Fixed position centered below the Start button / Birthday Card area
+                // Using 160px offset from the center of the screen
+                image(titleSigImg, width/2, height/2 + 160, sigW, sigH);
             }
         }
 
@@ -226,7 +241,6 @@
             let cardW = min(width * 0.9, 420);
             let cardH = min(height * 0.8, 520);
             
-            // --- MAIN CARD ---
             rectMode(CENTER);
             stroke('#D02090');
             strokeWeight(5);
@@ -237,30 +251,25 @@
             strokeWeight(2);
             rect(0, 0, cardW - 20, cardH - 20, 15);
             
-            // --- DECORATIVE BORDER IMAGES ---
-            // Place images at corners and midpoints
             let decorScale = globalScale * 0.8; 
             imageMode(CENTER);
             
-            // Corners
             image(characterPool[0], -cardW/2, -cardH/2, characterPool[0].width * decorScale, characterPool[0].height * decorScale);
             image(characterPool[1], cardW/2, -cardH/2, characterPool[1].width * decorScale, characterPool[1].height * decorScale);
             image(characterPool[3], -cardW/2, cardH/2, characterPool[3].width * decorScale, characterPool[3].height * decorScale);
             image(characterPool[5], cardW/2, cardH/2, characterPool[5].width * decorScale, characterPool[5].height * decorScale);
             
-            // Mid-points for extra decoration
             image(characterPool[7], 0, -cardH/2, characterPool[7].width * decorScale, characterPool[7].height * decorScale);
             image(characterPool[8], 0, cardH/2, characterPool[8].width * decorScale, characterPool[8].height * decorScale);
             image(characterPool[2], -cardW/2, 0, characterPool[2].width * decorScale, characterPool[2].height * decorScale);
             image(characterPool[4], cardW/2, 0, characterPool[4].width * decorScale, characterPool[4].height * decorScale);
 
-            // --- TEXT ---
             noStroke();
             fill('#D02090');
             textFont('VT323');
             textAlign(CENTER, CENTER);
             
-            let msg = "happy birthday to my beautiful baddie boba bestie!! i love you so so much and hope you enjoy this game i designed and coded for you <3\n\nthis app was inspired by you! i know you like the line friends characters and we've had so many cute cafe and boba sessions where we've spilled all the tea ;)\n\nhope you have the most wonderful birthday, Melba!\n\nxoxo, Amy";
+            let msg = "happy birthday to my beautiful baddie boba bestie!! i love you so so much and hope you enjoy this game i designed and coded for you <3\n\nthis app was inspired by you! i know you like the line friends characters and we've had so many cute cafe and boba sessions where we've spilled all the tea ;)\n\nhope you have the most wonderful birthday!\n\nxoxo, Amy";
             
             let dynamicSize = map(cardW, 300, 420, 18, 24);
             textSize(dynamicSize);
