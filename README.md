@@ -1,10 +1,12 @@
 
-# 🍓 boba besties 🥤
-by Amy Ouyang 2/25/26
+# 🍓 boba besties 🧋
+by Amy Ouyang 2/25/26 🥤
 
 A cozy, physics-based game where you can pop the boba (designed as Line friends) created as a special birthday surprise for my friend <3
 Tilt your phone to slosh the characters around, tap to pop them (like popping boba!).
-If you pop all the boba, you get a sweet surprise at the end :) (a birthday card pop up that i wrote) 
+If you pop all the boba, you get a sweet surprise at the end :) 
+
+(the surprise is a birthday card pop up that i wrote) 
 
 This game is 100% hand-drawn and has completely custom assets.
 
@@ -12,12 +14,21 @@ This game is 100% hand-drawn and has completely custom assets.
 
 **Play at https://amicorn.github.io/boba-besties/**
 
-## 🎨 Screenshots
-![Alt text for the image](image_url_or_path "Optional title")
+## 🎨 Art / Screenshots
 
+**Cover art**
+
+<img src="screenshots/cover_art.jpeg" width="500">
+
+| Start Screen | Gameplay |
+| :---: | :---: |
+| <img src="screenshots/start_screen_mobile.jpeg" width="400"> | <img src="screenshots/bobas_wall_mobile.jpeg" width="400"> |
+| **Falling Bobas** | **Birthday Card** |
+| <img src="screenshots/falling_bobas_mobile.jpeg" width="400"> | <img src="screenshots/birthday_card_mobile.jpeg" width="400"> |
 
 ## ✨ Inspiration
 This game was inspired by my friend, who likes the korean Line friends characters and boba.
+The popping effect simulates irl popping boba, which I've had at various boba places. 🧋
 
 **Characters:** 
 - The cast includes:
@@ -106,14 +117,22 @@ python -m http.server
 Go to http://localhost:8000 and enjoy!
 
 ## 📂 File Structure
+```
 Plaintext
-├── index.html          # Main game code & logic
-├── assets/
-│   ├── background.png  # Main tea background
-│   ├── title_sig.png   # Bottom signature/logo
-│   ├── pop.mp3         # Popping sound effect
-│   └── ...             # Various character sprites (bunny, bear, frog, etc.)
+
+├── index.html              # Main game code & logic
+├── assets/                 # Game assets
+│   ├── background.png      # Tea background
+│   ├── title_sig.png       # Bottom title logo & signature
+│   ├── boba_button.png     # Start button image
+│   ├── pop.mp3             # popping sfx
+│   └── ...                 # Character sprites (bunny, bear, frog, etc.)
+├── screenshots/            # Documentation images
+│   ├── start_screen_mobile.jpeg    # Preview of the start screen
+│   ├── falling_bobas_mobile.jpeg   # Preview of boba popping / gameplay
+│   └── birthday_card_mobile.jpeg   # Preview of the final surprise
 └── README.md
+```
 
 ## 💖 Credits
 - Designed, drawn, and coded with love by Amy Ouyang.
