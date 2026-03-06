@@ -151,6 +151,6 @@ Plaintext
 ```
 
 ## 💖 Credits
-- Designed, drawn, and coded with love by Amy Ouyang.
+- Code, design, and art by Amy Ouyang.
 - Drew all assets by hand in Procreate.
 - Special thanks to the open-source communities of p5.js and Matter.js
